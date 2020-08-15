@@ -1,0 +1,47 @@
+<HTML>
+<HEAD>
+<META charset="UTF-8">
+<SCRIPT>
+
+function onLoad()
+{
+	var wasmblob = atob( "\
+%WASMBLOB%
+	");
+
+	var array = new Uint8Array(new ArrayBuffer(wasmblob.length));
+	for(i = 0; i < wasmblob.length; i++) {
+		array[i] = wasmblob.charCodeAt(i);
+	}
+
+	var imports = {
+		  env : {
+			writeout: function( arg ) {
+				document.getElementById( "docdiv" ).innerHTML = arg;
+			}
+		  }
+	};
+
+
+	WebAssembly.instantiate( array, imports ).then( 
+		function(wa) {
+			console.log( wa.instance.exports.add2( 3, 4) );
+			console.log( wa.instance.exports.testcallback( 9 ) );
+		}
+	);
+
+}
+
+</SCRIPT>
+</HEAD>
+<BODY onLoad=onLoad()>
+
+Body (This is pure HTML)
+
+<BR><BR>
+
+<DIV ID=docdiv>This is a div.  It should be replaced.</DIV>
+
+</BODY>
+</HTML>
+
