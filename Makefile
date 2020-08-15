@@ -1,7 +1,14 @@
 all : c-test.html
 
-EMCC:=/home/cnlohr/git/emsdk/upstream/emscripten/emcc
-EMCC_FLAGS:= -s EXPORTED_FUNCTIONS='["_testcallback","_add2"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0
+ifneq ("$(wildcard ~/git/emsdk/upstream/emscripten/emcc)","")
+EMCC?=~/git/emsdk/upstream/emscripten/emcc
+else
+EMCC?=emcc
+endif
+
+EMCC_FLAGS:= -s EXPORTED_FUNCTIONS='["_testcallback","_add2"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0 
+#-s SIDE_MODULE=1
+#-s STANDALONE_WASM=1
 #-s MODULARIZE
 
 C_S:=cfile.c

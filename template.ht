@@ -5,6 +5,10 @@
 
 function onLoad()
 {
+	var g_wa;
+	var memory_bytes; //Actually a UInt8Array of the memory object.
+	function GetStringAt( memory_address ) { memory_address |= 0; var ret = ""; var ch = 0|0; for( var v = memory_address; ch = memory_bytes[v]; v++ ) ret += String.fromCharCode(ch); return ret; }
+
 	var wasmblob = atob( "\
 %WASMBLOB%
 	");
@@ -15,18 +19,21 @@ function onLoad()
 	}
 
 	var imports = {
-		  env : {
-			writeout: function( arg ) {
-				document.getElementById( "docdiv" ).innerHTML = arg;
-			}
-		  }
+		env : {
+			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
+			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = GetStringAt(arg); },
+		}
 	};
 
 
 	WebAssembly.instantiate( array, imports ).then( 
 		function(wa) {
+			g_wa = wa;
+			memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
+			console.log( wa );
 			console.log( wa.instance.exports.add2( 3, 4) );
 			console.log( wa.instance.exports.testcallback( 9 ) );
+			console.log( wa.instance );
 		}
 	);
 
@@ -41,6 +48,7 @@ Body (This is pure HTML)
 <BR><BR>
 
 <DIV ID=docdiv>This is a div.  It should be replaced.</DIV>
+<DIV ID=docdivStr>This is a div for string.  It should be replaced.</DIV>
 
 </BODY>
 </HTML>
