@@ -6,8 +6,13 @@
 function onLoad()
 {
 	var g_wa;
-	var memory_bytes; //Actually a UInt8Array of the memory object.
-	function GetStringAt( memory_address ) { memory_address |= 0; var ret = ""; var ch = 0|0; for( var v = memory_address; ch = memory_bytes[v]; v++ ) ret += String.fromCharCode(ch); return ret; }
+	var memory_bytes; //Actually a  UInt8Array of the memory object.
+	var memory_words; //Actually an Int32Array of the memory object.
+	var canvas = document.getElementById( "rawdrawcanvas" );
+	var ctx = canvas.getContext("2d");
+	var lastx=null, lasty=null;
+
+	function UTF8ToString( memory_address ) { memory_address |= 0; var ret = ""; var ch = 0|0; for( var v = memory_address; ch = memory_bytes[v]; v++ ) ret += String.fromCharCode(ch); return ret; }
 
 	var wasmblob = atob( "\
 %WASMBLOB%
@@ -21,7 +26,13 @@ function onLoad()
 	var imports = {
 		env : {
 			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
-			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = GetStringAt(arg); },
+			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = UTF8ToString(arg); },
+			beginPath : function() { ctx.beginPath(); },
+			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
+			stroke : function() { ctx.stroke(); },
+			OGGetAbsoluteTime : function() { return window.performance.now() / 1000.0; },
+			canvasClear : function() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
 		}
 	};
 
@@ -30,12 +41,27 @@ function onLoad()
 		function(wa) {
 			g_wa = wa;
 			memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
+			memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
 			console.log( wa );
 			console.log( wa.instance.exports.add2( 3, 4) );
 			console.log( wa.instance.exports.testcallback( 9 ) );
 			console.log( wa.instance );
+
+
+			function tickmain()
+			{
+				if( wa.instance.exports.animationFrame )
+				{
+					wa.instance.exports.animationFrame();
+					window.requestAnimationFrame(tickmain);
+				}
+			}
+			window.requestAnimationFrame(tickmain);
 		}
 	);
+
+
+
 
 }
 
@@ -50,6 +76,9 @@ Body (This is pure HTML)
 <DIV ID=docdiv>This is a div.  It should be replaced.</DIV>
 <DIV ID=docdivStr>This is a div for string.  It should be replaced.</DIV>
 
+<TABLE border=1><TR><TD>
+<CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480></CANVAS>
+</TD></TR></TABLE>
 </BODY>
 </HTML>
 
