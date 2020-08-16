@@ -6,7 +6,7 @@ else
 EMCC?=emcc
 endif
 
-EMCC_FLAGS:= -s EXPORTED_FUNCTIONS='["_testcallback","_add2"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0 
+EMCC_FLAGS:= -s EXPORTED_FUNCTIONS='["_testcallback","_add2","_Wmain","_mymain","_asyncify_start_unwind","_asyncify_stop_rewind","_asyncify_stop_unwind","_asyncify_start_rewind","_setThrew"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s ASYNCIFY
 #-s SIDE_MODULE=1
 #-s STANDALONE_WASM=1
 #-s MODULARIZE

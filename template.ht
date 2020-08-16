@@ -5,9 +5,25 @@
 
 function onLoad()
 {
-	var g_wa;
+	var instance;
 	var memory_bytes; //Actually a UInt8Array of the memory object.
-	function GetStringAt( memory_address ) { memory_address |= 0; var ret = ""; var ch = 0|0; for( var v = memory_address; ch = memory_bytes[v]; v++ ) ret += String.fromCharCode(ch); return ret; }
+	var memory_words;
+	var wasmExports;
+	var canvas = document.getElementById( "rawdrawcanvas" );
+	var ctx = canvas.getContext("2d");
+	var lastx=null, lasty=null;
+	var maincoro = null;
+	var stacktop = 0;
+
+	function UTF8ToString( memory_address )
+	{
+		memory_address |= 0;
+		var ret = "";
+		var ch = 0|0;
+		for( var v = memory_address; ch = memory_bytes[v]; v++ )
+			ret += String.fromCharCode(ch);
+		return ret;
+	}
 
 	var wasmblob = atob( "\
 %WASMBLOB%
@@ -18,25 +34,94 @@ function onLoad()
 		array[i] = wasmblob.charCodeAt(i);
 	}
 
+	//Look at sleep example here: https://kripken.github.io/blog/wasm/2019/07/16/asyncify.html
+	var sleeping = false;
+
 	var imports = {
 		env : {
-			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
-			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = GetStringAt(arg); },
+			writestr: function( arg ) { var str = UTF8ToString(arg); console.log( str ); document.getElementById( "terminal" ).innerHTML += str + "<BR>"; },
+			beginPath : function() { ctx.beginPath(); },
+			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
+			stroke : function() { ctx.stroke(); },
+			OGGetAbsoluteTime : function() { return window.performance.now() / 1000.0; },
+			dummyJSFunction : function(arg) { return arg+1; },
+			waitRecallMain : function() { window.requestAnimationFrame( function() { console.log("WM" ); instance.exports.Wmain(); }  ); },
+			debug : function(arg) { console.log(arg); },
+			jssleep : function(ms, DATA_ADDR, stack_start, stack_end )
+		 	{
+			  var sp = wasmExports.stackSave();
+			  if (!sleeping) {
+				// We are called in order to start a sleep/unwind.
+				console.log('sleep... ('+ms+','+DATA_ADDR+',<' + sp + ',' + stacktop + '>' + stack_start + "," + stack_end + ')');
+				console.log( instance );
+				// Fill in the data structure. The first value has the stack location,
+				// which for simplicity we can start right after the data structure itself.
+				memory_words[DATA_ADDR >> 2] = sp;
+				// The end of the stack will not be reached here anyhow.
+				memory_words[DATA_ADDR + 4 >> 2] = stacktop;
+				wasmExports.asyncify_start_unwind(DATA_ADDR);
+				sleeping = true;
+				// Resume after the proper delay.
+				setTimeout(function() {
+				  console.log('timeout ended, starting to rewind the stack');
+				  wasmExports.asyncify_start_rewind(DATA_ADDR);
+					console.log('calling back into main' );
+				  // The code is now ready to rewind; to start the process, enter the
+				  // first function that should be on the call stack.
+					wasmExports.stackRestore(sp);
+			//		wasmExports.setThrew(0,1);
+					  wasmExports.mymain(0);
+					console.log( "should not not get called\n" );
+				}, ms);
+			  } else {
+				// We are called as part of a resume/rewind. Stop sleeping.
+				console.log('...resume');
+				wasmExports.asyncify_stop_rewind();
+				sleeping = false;
+			  }
+			},
+			after: function() {
+			  console.log('after!');
+			}
+
 		}
 	};
 
+	function mainf()
+	{
+		stacktop = wasmExports.stackSave();
+		wasmExports.mymain(0);
+	}
 
 	WebAssembly.instantiate( array, imports ).then( 
 		function(wa) {
-			g_wa = wa;
-			memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
+			instance = wa.instance;
+			wasmExports = instance.exports;
+
+			memory_bytes = new Uint8Array(instance.exports.memory.buffer);
+			memory_words = new Int32Array(instance.exports.memory.buffer);
+
 			console.log( wa );
-			console.log( wa.instance.exports.add2( 3, 4) );
-			console.log( wa.instance.exports.testcallback( 9 ) );
-			console.log( wa.instance );
+			console.log( "3+4 = " + instance.exports.add2( 3, 4) );
+			console.log( "callbacktest = " + instance.exports.testcallback( 9 ) );
+			mainf();
+
+			//instance.exports.Wmain(0);
+
+			//console.log( instance );
+			//maincoro = coromain_launcher();
+			//testmain();
 		}
 	);
 
+/*
+	function tickmain()
+	{
+		if( maincoro ) maincoro.next();
+		window.requestAnimationFrame(tickmain);
+	}
+	window.requestAnimationFrame(tickmain);
+*/
 }
 
 </SCRIPT>
@@ -46,9 +131,9 @@ function onLoad()
 Body (This is pure HTML)
 
 <BR><BR>
+<TABLE BORDER=1><TR><TD><CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480></CANVAS></TD></TR></TABLE>
+<DIV ID=terminal></DIV>
 
-<DIV ID=docdiv>This is a div.  It should be replaced.</DIV>
-<DIV ID=docdivStr>This is a div for string.  It should be replaced.</DIV>
 
 </BODY>
 </HTML>
