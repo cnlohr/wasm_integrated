@@ -69,7 +69,8 @@ function onLoad()
 </HEAD>
 <BODY onLoad=onLoad()>
 
-Body (This is pure HTML)
+This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.
+
 
 <BR><BR>
 
