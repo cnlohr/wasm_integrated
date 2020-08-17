@@ -23,16 +23,41 @@ function onLoad()
 		array[i] = wasmblob.charCodeAt(i);
 	}
 
+	var STACK_QUICKRET;
+	var STACK_DORET;
+
 	var imports = {
 		env : {
-			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
+			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; console.log( "XXX") ;console.log( g_wa );  },
 			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = UTF8ToString(arg); },
 			beginPath : function() { ctx.beginPath(); },
 			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
 			stroke : function() { ctx.stroke(); },
 			OGGetAbsoluteTime : function() { return window.performance.now() / 1000.0; },
-			canvasClear : function() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+			canvasClear : function() { ctx.clearRect(0, 0, canvas.width, canvas.height); },
 
+			stacksetup : function() {
+				console.log( "STACK SETUP" );
+				STACK_QUICKRET = g_wa.instance.exports.stackSave();
+				memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
+				console.log( "VALUE: " + memory_words[(STACK_QUICKRET>>2)] );
+				console.log( "VALUE: " + memory_words[(STACK_QUICKRET>>2)-1] );
+				console.log( "STACK:" + STACK_QUICKRET);
+				g_wa.instance.exports.setThrew(0,1);
+			},
+			waitout : function()
+			{
+				console.log( "WAIT OUT" );
+				setTimeout( function() {
+					console.log( "Restoring" );
+					g_wa.instance.exports.stackRestore( STACK_DORET );
+					g_wa.instance.exports.waitret();
+				}, 1000 );
+				STACK_DORET = g_wa.instance.exports.stackSave();
+				g_wa.instance.exports.stackRestore( STACK_QUICKRET );
+				g_wa.instance.exports.setThrew(0,1);
+			},
+			consolelog : function( arg ) { console.log( UTF8ToString(arg) ) ; },
 		}
 	};
 
@@ -46,8 +71,11 @@ function onLoad()
 			console.log( wa.instance.exports.add2( 3, 4) );
 			console.log( wa.instance.exports.testcallback( 9 ) );
 			console.log( wa.instance );
-
-
+			console.log( "STARTING" );
+			wa.instance.exports.waitret();
+			wa.instance.exports.waittask();
+			console.log( "ENDING" );
+/*
 			function tickmain()
 			{
 				if( wa.instance.exports.animationFrame )
@@ -57,6 +85,7 @@ function onLoad()
 				}
 			}
 			window.requestAnimationFrame(tickmain);
+*/
 		}
 	);
 
@@ -74,7 +103,7 @@ function onLoad()
 <DIV ID=docdivStr>This is a div for string.  It should be replaced.</DIV>
 <DIV>This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.</DIV>
 </DIV>
-<CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480 STYLE="positon:absolute;z-index:-1"></CANVAS>
+<CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480 STYLE="positon:absolute;z-index:-10"></CANVAS>
 </TD></TR></TABLE>
 </BODY>
 </HTML>

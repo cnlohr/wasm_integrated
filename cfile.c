@@ -27,6 +27,10 @@ int testcallback( int z )
 	return z+10000;
 }
 
+extern void stacksetup();
+extern void waitout();
+extern void consolelog( const char* s );
+
 int frame;
 
 void animationFrame()
@@ -49,4 +53,22 @@ void animationFrame()
 	stroke();
 }
 
+
+
+void waittask()
+{
+	volatile int sentinel = 85755555;
+	consolelog("waittask1");
+	waitout();
+	consolelog("waittask2");
+}
+
+void waitret()
+{
+	volatile int sentinel = 12994423;
+	consolelog("waitret1");
+	stacksetup(sentinel);
+	stacksetup(sentinel);
+	consolelog("waitret2");
+}
 
