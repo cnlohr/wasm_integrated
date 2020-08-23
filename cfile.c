@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <math.h>
 
+
+int addwat( int a, int b );
+
 int add2( int a, int b )
 {
 	return a+b;
@@ -19,12 +22,67 @@ extern void canvasClear();
 int testcallback( int z )
 {
 	char ct[100];
-	sprintf( ct, "testcallback(%d) this string is in C.\n", z );
-
+	sprintf( ct, "testcallback(%d) this string is in C.  WAT: %d\n", z, /* addwat( 5, 6 ) */ 5 );
 	writeoutStr( ct );
 	writeout( z+10000 );
 
 	return z+10000;
+}
+
+struct stack_unwind
+{
+	void * start;
+	void * stop;
+} UNW;
+
+
+void asyncify_start_unwind( struct stack_unwind * );
+void asyncify_stop_unwind();
+void asyncify_stop_rewind();
+void asyncify_start_rewind( struct stack_unwind * );
+
+extern void jssleep();
+
+int is_sleeping = 0;
+
+void csleep()
+{
+	writeoutStr( "csleep A" );
+	if( is_sleeping )
+	{
+//		asyncify_stop_rewind();	
+		is_sleeping = 0;		
+	}
+	else
+	{
+		is_sleeping = 1;
+		UNW.stop = UNW.start + 1000;
+//		asyncify_start_unwind( &UNW );
+		//jssleep();
+	}
+	writeoutStr( "csleep B" );
+}
+
+void internalmain()
+{
+	writeoutStr( "internalmain A" );
+	csleep();
+	writeoutStr( "internalmain B" );
+}
+
+void testmain()
+{
+	int i;
+	UNW.start = &i;
+	writeoutStr( "testmain A" );
+	internalmain();
+	writeoutStr( "testmain B" );
+//	asyncify_stop_unwind();
+	writeoutStr( "testmain C" );
+//	asyncify_start_rewind( &UNW );
+	writeoutStr( "testmain D" );
+	internalmain();
+	writeoutStr( "testmain E" );
 }
 
 int frame;

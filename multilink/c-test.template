@@ -27,13 +27,7 @@ function onLoad()
 		env : {
 			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
 			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = UTF8ToString(arg); },
-			beginPath : function() { ctx.beginPath(); },
-			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
-			stroke : function() { ctx.stroke(); },
-			OGGetAbsoluteTime : function() { return window.performance.now() / 1000.0; },
-			canvasClear : function() { ctx.clearRect(0, 0, canvas.width, canvas.height); },
-
-			//jssleep() : function() { setTimeout( function() { console.log( "jssleep start" ); g_wa.instance.exports.csleep(); console.log( "jssleep return" ); }, 1000  ); },
+			//wasi_snapshot_preview1: function() { console.log("wasi_snapshot_preview1"); },
 		}
 	};
 
@@ -45,11 +39,9 @@ function onLoad()
 			memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
 			console.log( wa );
 			console.log( wa.instance.exports.add2( 3, 4) );
-			console.log( wa.instance.exports.testcallback( 9 ) );
+//			console.log( wa.instance.exports.testcallback( 9 ) );
 			console.log( wa.instance );
-
-
-			console.log( wa.instance.exports.testmain() );
+//			console.log( wa.instance.exports.testmain() );
 
 /*			function tickmain()
 			{

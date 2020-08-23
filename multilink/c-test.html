@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<META charset="UTF-8">
+<SCRIPT>
+
+function onLoad()
+{
+	var g_wa;
+	var memory_bytes; //Actually a  UInt8Array of the memory object.
+	var memory_words; //Actually an Int32Array of the memory object.
+	var canvas = document.getElementById( "rawdrawcanvas" );
+	var ctx = canvas.getContext("2d");
+	var lastx=null, lasty=null;
+
+	function UTF8ToString( memory_address ) { memory_address |= 0; var ret = ""; var ch = 0|0; for( var v = memory_address; ch = memory_bytes[v]; v++ ) ret += String.fromCharCode(ch); return ret; }
+
+	var wasmblob = atob( "\
+AGFzbQEAAAABHwZgAX8AYAAAYAF/AX9gAAF/YAN/f38Bf2ADf35/AX4CJAEWd2FzaV9zbmFwc2hv\
+		dF9wcmV2aWV3MQlwcm9jX2V4aXQAAAMWFQEDAQMAAQABAwACAgAAAAMBAgIAAgQFAXABAgIFBgEB\
+		gAKAAgYUA38BQcCJwAILfwBBlAgLfwFBAAsHiwEKBm1lbW9yeQIABl9zdGFydAADEF9fZXJybm9f\
+		bG9jYXRpb24ABAZmZmx1c2gAEglzdGFja1NhdmUACQxzdGFja1Jlc3RvcmUACgpzdGFja0FsbG9j\
+		AAsKX19kYXRhX2VuZAMBEV9fc2V0X3N0YWNrX2xpbWl0ABQQX19ncm93V2FzbU1lbW9yeQAVCQcB\
+		AEEBCwEBCvADFQIACwsBAX9BACEAIAAPCxEAAkBBAUUNABABCxACEAcACwUAQYAICwcAIAAQAAAL\
+		KwEBf0EAIQACQEEAQQBNDQADQCAAQXxqIgAoAgARAQAgAEEASw0ACwsQCAsNABAIEAYQCCAAEAUA\
+		CwIACwQAIwALEwEBfyAAIgEjAkkEQAALIAEkAAsgAQN/AkAjACAAa0FwcSIBIgMjAkkEQAALIAMk\
+		AAsgAQsEAEEBCwIACwIACwIACwoAQYQIEA5BjAgLBwBBhAgQDwusAQECfwJAAkAgAEUNAAJAIAAo\
+		AkxBf0oNACAAEBMPCyAAEAwhASAAEBMhAiABRQ0BIAAQDSACDwtBACECAkBBACgCkAhFDQBBACgC\
+		kAgQEiECCwJAEBAoAgAiAEUNAANAQQAhAQJAIAAoAkxBAEgNACAAEAwhAQsCQCAAKAIUIAAoAhxN\
+		DQAgABATIAJyIQILAkAgAUUNACAAEA0LIAAoAjgiAA0ACwsQEQsgAgtrAQJ/AkAgACgCFCAAKAIc\
+		TQ0AIABBAEEAIAAoAiQRBAAaIAAoAhQNAEF/DwsCQCAAKAIEIgEgACgCCCICTw0AIAAgASACa6xB\
+		ASAAKAIoEQUAGgsgAEEANgIcIABCADcDECAAQgA3AgRBAAsGACAAJAILBgAgAEAACwurCAEAQQAL\
+		pAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+		AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADABFAA\
+			");
+
+	var array = new Uint8Array(new ArrayBuffer(wasmblob.length));
+	for(i = 0; i < wasmblob.length; i++) {
+		array[i] = wasmblob.charCodeAt(i);
+	}
+
+	var imports = {
+		env : {
+			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
+			writeoutStr: function( arg ) {document.getElementById( "docdivStr" ).innerHTML = UTF8ToString(arg); },
+			//wasi_snapshot_preview1: function() { console.log("wasi_snapshot_preview1"); },
+		}
+	};
+
+
+	WebAssembly.instantiate( array, imports ).then( 
+		function(wa) {
+			g_wa = wa;
+			memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
+			memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
+			console.log( wa );
+			console.log( wa.instance.exports.add2( 3, 4) );
+//			console.log( wa.instance.exports.testcallback( 9 ) );
+			console.log( wa.instance );
+//			console.log( wa.instance.exports.testmain() );
+
+/*			function tickmain()
+			{
+				if( wa.instance.exports.animationFrame )
+				{
+					wa.instance.exports.animationFrame();
+					window.requestAnimationFrame(tickmain);
+				}
+			}
+			window.requestAnimationFrame(tickmain);
+*/
+
+		}
+	);
+
+
+
+
+}
+
+</SCRIPT>
+</HEAD>
+<BODY onLoad=onLoad()>
+<TABLE border=1><TR><TD WIDTH=640>
+<DIV STYLE="position:absolute;z-index:-2;width:640">
+<DIV ID=docdiv>This is a div.  It should be replaced.</DIV>
+<DIV ID=docdivStr>This is a div for string.  It should be replaced.</DIV>
+<DIV>This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.</DIV>
+</DIV>
+<CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480 STYLE="positon:absolute;z-index:-1"></CANVAS>
+</TD></TR></TABLE>
+</BODY>
+</HTML>
+
