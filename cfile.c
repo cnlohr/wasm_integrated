@@ -50,15 +50,15 @@ void csleep()
 	writeoutStr( "csleep A" );
 	if( is_sleeping )
 	{
-//		asyncify_stop_rewind();	
+		asyncify_stop_rewind();	
 		is_sleeping = 0;		
 	}
 	else
 	{
 		is_sleeping = 1;
 		UNW.stop = UNW.start + 1000;
-//		asyncify_start_unwind( &UNW );
-		//jssleep();
+		asyncify_start_unwind( &UNW );
+		jssleep();
 	}
 	writeoutStr( "csleep B" );
 }
@@ -77,9 +77,9 @@ void testmain()
 	writeoutStr( "testmain A" );
 	internalmain();
 	writeoutStr( "testmain B" );
-//	asyncify_stop_unwind();
+	asyncify_stop_unwind();
 	writeoutStr( "testmain C" );
-//	asyncify_start_rewind( &UNW );
+	asyncify_start_rewind( &UNW );
 	writeoutStr( "testmain D" );
 	internalmain();
 	writeoutStr( "testmain E" );

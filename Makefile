@@ -11,7 +11,10 @@ EMCC_FLAGS:= -s EXPORTED_FUNCTIONS='["_testcallback","_add2","_animationFrame", 
 	"_asyncify_stop_unwind",\
 	"_asyncify_start_rewind","_asyncify_start_unwind","_asyncify_stop_rewind"]' \
 	-s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]' \
-	-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s ASYNCIFY=1 -s EXPORT_ALL=1 -s SIDE_MODULE=1
+	-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s ASYNCIFY=1
+
+# -s EXPORT_ALL=1
+# -s SIDE_MODULE=1
 #-s STANDALONE_WASM=1
 #-s MODULARIZE
 
@@ -26,10 +29,10 @@ cfile.wasm : $(C_S)
 %.wasm.b64 : %.wasm
 	cat $^ | base64 > $@
 
-c-test.wasm : cfile.wasm watfile.wasm
-	$(EMCC) -o $@ $^  -s ASYNCIFY=1 -s EXPORT_ALL=1 --no-entry
+#c-test.wasm : cfile.wasm watfile.wasm
+#	$(EMCC) -o $@ $^  -s ASYNCIFY=1 -s EXPORT_ALL=1 --no-entry
 
-c-test.html : template.ht c-test.wasm.b64 wasmtemplate
+c-test.html : template.ht cfile.wasm.b64 wasmtemplate
 	./wasmtemplate template.ht c-test.wasm.b64 > $@
 
 
