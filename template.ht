@@ -23,6 +23,132 @@ function onLoad()
 		array[i] = wasmblob.charCodeAt(i);
 	}
 
+
+
+
+	var Asyncify = { };
+	Asyncify.handleSleepReturnValue = 0;
+	Asyncify.HEAP32 = 0;
+	Asyncify.setDataHeader = function(ptr, stack, stackSize) {
+        HEAP32[((ptr)>>2)]=stack;
+        HEAP32[(((ptr)+(4))>>2)]=stack + stackSize;
+      }
+	Asyncify.setDataRewindFunc = function(ptr) {
+        var bottomOfCallStack = Asyncify.exportCallStack[0];
+        var rewindId = Asyncify.getCallStackId(bottomOfCallStack);
+        HEAP32[(((ptr)+(8))>>2)]=rewindId;
+	}
+	Asyncify.allocateData = function() {
+        // An asyncify data structure has three fields:
+        //  0  current stack pos
+        //  4  max stack pos
+        //  8  id of function at bottom of the call stack (callStackIdToFunc[id] == js function)
+        //
+        // The Asyncify ABI only interprets the first two fields, the rest is for the runtime.
+        // We also embed a stack in the same memory region here, right next to the structure.
+        // This struct is also defined as asyncify_data_t in emscripten/fiber.h
+        var ptr = wa.instance.exports._malloc(12 + Asyncify.StackSize);
+        Asyncify.setDataHeader(ptr, ptr + 12, Asyncify.StackSize);
+        Asyncify.setDataRewindFunc(ptr);
+        return ptr;
+	}
+
+
+	Asyncify.getDataRewindFunc = function(ptr) {
+        var id = /*HEAP32*/memory_words[(((ptr)+(8))>>2)];
+        var func = Asyncify.callStackIdToFunc[id];
+        return func;
+	}
+
+	function AsyncifyhandleSleep( startAsync )
+	{
+          var reachedCallback = false;
+          var reachedAfterCallback = false;
+			console.log( "StartAsyncifyFunction: "  );
+			console.log( startAsync );
+
+          startAsync( function(handleSleepReturnValue) {
+            Asyncify.handleSleepReturnValue = handleSleepReturnValue || 0;
+            reachedCallback = true;
+			console.log( "Reached Callback\n" );
+
+            if (!reachedAfterCallback) {
+				console.log( "We are happening synchronously, so no need for async.\n" );
+              return;
+            }
+            // This async operation did not happen synchronously, so we did
+            // unwind. In that case there can be no compiled code on the stack,
+            // as it might break later operations (we can rewind ok now, but if
+            // we unwind again, we would unwind through the extra compiled code
+            // too).
+//            assert(!Asyncify.exportCallStack.length, 'Waking up (starting to rewind) must be done from JS, without compiled code on the stack.');
+//           Asyncify.state = Asyncify.State.Rewinding;
+//            runAndAbortIfError(function() { Module['_asyncify_start_rewind'](Asyncify.HEAP32) });
+ //           if (Browser.mainLoop.func) {
+  //            Browser.mainLoop.resume();
+   //         }
+			console.log( "XXXXXXX\n" );
+
+            var start = Asyncify.getDataRewindFunc(Asyncify.HEAP32);
+            var asyncWasmReturnValue = start();
+            if (!Asyncify.HEAP32) {
+              // All asynchronous execution has finished.
+              // `asyncWasmReturnValue` now contains the final
+              // return value of the exported async WASM function.
+              //
+              // Note: `asyncWasmReturnValue` is distinct from
+              // `Asyncify.handleSleepReturnValue`.
+              // `Asyncify.handleSleepReturnValue` contains the return
+              // value of the last C function to have executed
+              // `Asyncify.handleSleep()`, where as `asyncWasmReturnValue`
+              // contains the return value of the exported WASM function
+              // that may have called C functions that
+              // call `Asyncify.handleSleep()`.
+              var asyncFinalizers = Asyncify.asyncFinalizers;
+              Asyncify.asyncFinalizers = [];
+              asyncFinalizers.forEach(function(func) {
+                func(asyncWasmReturnValue);
+              });
+            }
+          });
+          reachedAfterCallback = true;
+          if (!reachedCallback) {
+            // A true async operation was begun; start a sleep.
+            Asyncify.state = Asyncify.State.Unwinding;
+            // TODO: reuse, don't alloc/free every sleep
+            Asyncify.HEAP32 = Asyncify.allocateData();
+            runAndAbortIfError(function() { Module['_asyncify_start_unwind'](Asyncify.HEAP32) });
+            if (Browser.mainLoop.func) {
+              Browser.mainLoop.pause();
+            }
+          }
+        } else if (Asyncify.state === Asyncify.State.Rewinding) {
+          // Stop a resume.
+          Asyncify.state = Asyncify.State.Normal;
+          runAndAbortIfError(Module['_asyncify_stop_rewind']);
+        //  _free(Asyncify.HEAP32);
+          Asyncify.HEAP32 = null;
+          // Call all sleep callbacks now that the sleep-resume is all done.
+          Asyncify.sleepCallbacks.forEach(function(func) {
+            func();
+          });
+        } else {
+          abort('invalid state: ' + Asyncify.state);
+        }
+        return Asyncify.handleSleepReturnValue;
+	}
+
+	function MyYield()
+	{
+		console.log("MyYield1");
+		AsyncifyhandleSleep(
+			function(wakeUp) {
+				console.log("MyYield3");
+				setTimeout(wakeUp, ms);
+			  });
+		console.log("MyYield2");
+	}
+
 	var imports = {
 		env : {
 			writeout: function( arg ) { document.getElementById( "docdiv" ).innerHTML = arg; },
@@ -32,7 +158,7 @@ function onLoad()
 			stroke : function() { ctx.stroke(); },
 			OGGetAbsoluteTime : function() { return window.performance.now() / 1000.0; },
 			canvasClear : function() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
+			JSYield : function() { MyYield() }
 		}
 	};
 
@@ -47,7 +173,9 @@ function onLoad()
 			console.log( wa.instance.exports.testcallback( 9 ) );
 			console.log( wa.instance );
 
+			wa.instance.exports.main();
 
+			/*
 			function tickmain()
 			{
 				if( wa.instance.exports.animationFrame )
@@ -57,6 +185,7 @@ function onLoad()
 				}
 			}
 			window.requestAnimationFrame(tickmain);
+			*/
 		}
 	);
 

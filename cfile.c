@@ -16,6 +16,8 @@ extern void stroke();
 extern void tackSegment( int x1, int y1, int x2, int y2 );
 extern void canvasClear();
 
+extern void JSYield();
+
 int testcallback( int z )
 {
 	char ct[100];
@@ -28,6 +30,13 @@ int testcallback( int z )
 }
 
 int frame;
+
+void main()
+{
+	writeoutStr( "Main 1" );
+	JSYield();
+	writeoutStr( "Main 2" );
+}
 
 void animationFrame()
 {
