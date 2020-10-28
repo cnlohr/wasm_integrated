@@ -69,12 +69,14 @@ function onLoad()
 </HEAD>
 <BODY onLoad=onLoad()>
 <TABLE border=1><TR><TD WIDTH=640>
-<DIV STYLE="position:absolute;z-index:-2;width:640">
+<DIV STYLE="position:absolute;width:640">
 <DIV ID=docdiv>This is a div.  It should be replaced.</DIV>
-<DIV ID=docdivStr>This is a div for string.  It should be replaced.</DIV>
+<DIV ID=docdivStr STYLE="z-index:4">This is a div for string.  It should be replaced.</DIV>
 <DIV>This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.</DIV>
 </DIV>
-<CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480 STYLE="positon:absolute;z-index:-1"></CANVAS>
+<DIV STYLE="positon:absolute;z-index:3">
+<CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480></CANVAS>
+</DIV>
 </TD></TR></TABLE>
 </BODY>
 </HTML>
