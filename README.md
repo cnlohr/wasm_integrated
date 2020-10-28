@@ -1,6 +1,8 @@
 # wasm_integrated
 An eample of how you can fully integrate wasm into a webpage.  No need for feteching or any of that jazz.  What if someone's on a connection with a lot of latency?  What if you want to load a wasm app from your hard drive directly, like double-clicking on the HTML file?  Whelp, this is that.
 
+Check it out live, here: [link](https://cnlohr.github.io/wasm_integrated/c-test.html)
+
 It's a demo of how to integrate the whole shebang into one small HTML file.  Get your small .c file compiled into wasm and loaded without any hocus pocus.
 
 ```
