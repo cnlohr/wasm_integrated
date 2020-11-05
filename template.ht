@@ -29,7 +29,9 @@ function onLoad()
 			beginPath : function() { ctx.beginPath(); },
 			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
 			stroke : function() { ctx.stroke(); },
-			logInt : function( x ) { console.log(x); }
+			logStr : function( s ) { console.log(s); },
+			requestAnimationFrame : function() { window.requestAnimationFrame(g_wa.instance.exports.reenterAnimation); },
+			setTimeout : function( t ) { setTimeout(g_wa.instance.exports.reenterTimer, t); }
 		}
 	};
 
@@ -40,9 +42,15 @@ function onLoad()
 			//memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
 			console.log( wa );
 			console.log( wa.instance );
-			g_wa.instance.exports.run();
 		}
 	);
+}
+
+function animation() {
+	g_wa.instance.exports.runAnimation();
+}
+function sleeper() {
+	g_wa.instance.exports.runTimer();
 }
 
 </SCRIPT>
@@ -51,6 +59,8 @@ function onLoad()
 <TABLE border=1><TR><TD WIDTH=640>
 <DIV STYLE="position:absolute;width:640">
 <DIV>This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.</DIV>
+<INPUT value="animation" type=submit onClick="animation()">
+<INPUT value="timer" type=submit onClick="sleeper()">
 </DIV>
 <DIV STYLE="positon:absolute;z-index:3">
 <CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480></CANVAS>

@@ -7,7 +7,7 @@
 	(memory 1 1)
 	(global $sleeping (mut i32) (i32.const 0))
 	(func $animation)
-	(func $submitFrame
+	(func $submitFrame (export "submitFrame")
 		(if
 			(i32.eqz (global.get $sleeping))
 			(block	
