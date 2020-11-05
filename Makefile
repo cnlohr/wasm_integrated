@@ -17,7 +17,7 @@ env.wasm : env.wat
 	wat2wasm -r -o $@ $^
 
 cfile.wasm : $(C_S) env.wasm
-	$(EMCC) -o $@ $(C_S) env.wasm $(EMCC_FLAGS)
+	clang -Wl,--no-entry,--allow-undefined,--export=run,--export=submitFrame,--export=animation -nostdlib --target=wasm32 -o $@ $(C_S) env.wasm
 	wasm-opt --asyncify $@ -o $@
 
 %.wasm.b64 : %.wasm

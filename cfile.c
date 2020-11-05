@@ -1,21 +1,14 @@
-#include <emscripten.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <math.h>
-#include <setjmp.h>
-
 //Function in Javascript Land
 extern void canvasClear();
 extern void beginPath();
 extern void tackSegment(int x1, int y1, int x2, int y2);
 extern void stroke();
 
-void runLoop();
 void submitFrame();
 
-const uint32_t callStackSize = 4096;
-uint8_t sleeping = 0;
-uint8_t callStack[callStackSize];
+const unsigned int callStackSize = 4096;
+unsigned char sleeping = 0;
+unsigned char callStack[callStackSize];
 struct {
 	void *beg;
 	void *end;
@@ -29,9 +22,8 @@ void *getCallStackData() {
 	return &callStruct;
 }
 
-void run() {
-	runLoop();
-}
+float cosf(float f) {return f;}
+float sinf(float f) {return f;}
 
 void animation() {
 	int frame = 0;
