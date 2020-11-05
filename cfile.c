@@ -10,6 +10,7 @@ extern void beginPath();
 extern void tackSegment(int x1, int y1, int x2, int y2);
 extern void stroke();
 extern void submitFrame();
+extern void writeStr();
 
 const uint32_t callStackSize = 4096;
 uint8_t sleeping = 0;
@@ -25,6 +26,10 @@ struct {
 
 void *getCallStackData() {
 	return &callStruct;
+}
+
+void doLog() {
+	writeStr();
 }
 
 void animation() {

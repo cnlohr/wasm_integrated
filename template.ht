@@ -3,12 +3,13 @@
 <META charset="UTF-8">
 <SCRIPT>
 
+var g_wa;
+var callStack;
+
 function onLoad()
 {
-	var g_wa;
 	var memory_bytes; //Actually a  UInt8Array of the memory object.
 	var memory_words; //Actually an Int32Array of the memory object.
-	var callStack;
 	var sleeping = false;
 	var canvas = document.getElementById( "rawdrawcanvas" );
 	var ctx = canvas.getContext("2d");
@@ -31,6 +32,7 @@ function onLoad()
 			beginPath : function() { ctx.beginPath(); },
 			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
 			stroke : function() { ctx.stroke(); },
+			writeStr : function() { console.log( "hi!" ); },
 			submitFrame : function() {
 				if (!sleeping) {
 					g_wa.instance.exports.asyncify_start_unwind(callStack);
@@ -55,10 +57,17 @@ function onLoad()
 			callStack = g_wa.instance.exports.getCallStackData();
 			console.log( wa );
 			console.log( wa.instance );
-			g_wa.instance.exports.animation();
-			g_wa.instance.exports.asyncify_stop_unwind();
 		}
 	);
+
+}
+function animation() {
+	g_wa.instance.exports.animation();
+	g_wa.instance.exports.asyncify_stop_unwind();
+}
+
+function log() {
+	g_wa.instance.exports.doLog();
 }
 
 </SCRIPT>
@@ -67,6 +76,8 @@ function onLoad()
 <TABLE border=1><TR><TD WIDTH=640>
 <DIV STYLE="position:absolute;width:640">
 <DIV>This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.</DIV>
+<INPUT value="animation" type=submit onClick="animation()">
+<INPUT value="log" type=submit onClick="log()">
 </DIV>
 <DIV STYLE="positon:absolute;z-index:3">
 <CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480></CANVAS>

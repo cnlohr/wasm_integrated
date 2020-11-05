@@ -6,7 +6,7 @@ else
 EMCC?=emcc
 endif
 
-EMCC_FLAGS:= --no-entry -s EXPORTED_FUNCTIONS='["_getCallStackData","_animation"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0
+EMCC_FLAGS:= --no-entry -s EXPORTED_FUNCTIONS='["_getCallStackData","_doLog","_animation"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0
 #-s SIDE_MODULE=1
 #-s STANDALONE_WASM=1
 #-s MODULARIZE
