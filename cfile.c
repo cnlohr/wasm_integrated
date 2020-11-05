@@ -1,32 +1,47 @@
-#include <emscripten.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <math.h>
-#include <setjmp.h>
-
 //Function in Javascript Land
 extern void canvasClear();
 extern void beginPath();
 extern void tackSegment(int x1, int y1, int x2, int y2);
 extern void stroke();
-extern void submitFrame();
+extern void logNum(unsigned int x);
+extern void requestAnimationFrame();
+extern void setTimeout(unsigned int);
+extern float sinf(float x);
+extern float cosf(float x);
 
-const uint32_t callStackSize = 4096;
-uint8_t sleeping = 0;
-uint8_t callStack[callStackSize];
+void start_unwind(void*);
+void stop_unwind();
+void start_rewind(void*);
+void stop_rewind();
+
+const unsigned int callStackSize = 4096;
+unsigned char callStack[callStackSize];
 struct {
 	void *beg;
 	void *end;
-	//void (*reenter)();
 } callStruct = {
 	callStack,
 	&callStack[callStackSize]
 };
+unsigned char sleepStack[callStackSize];
+struct {
+	void *beg;
+	void *end;
+} sleepStruct = {
+	sleepStack,
+	&sleepStack[callStackSize]
+};
 
-void *getCallStackData() {
-	return &callStruct;
+unsigned char sleeping0 = 0;
+void submitFrame() {
+	if(!sleeping0) {
+		sleeping0 = 1;
+		start_unwind(&callStruct);
+	} else {
+		stop_rewind();
+		sleeping0 = 0;
+	}
 }
-
 void animation() {
 	int frame = 0;
 	do {
@@ -45,4 +60,44 @@ void animation() {
 		submitFrame();
 		++frame;
 	} while(1);
+}
+void reenterAnimation() {
+	start_rewind(&callStruct);
+	animation();
+	stop_unwind();
+	requestAnimationFrame();
+}
+void runAnimation() {
+	animation();
+	stop_unwind();
+	requestAnimationFrame();
+}
+
+unsigned char sleeping1 = 0;
+void timerSleep() {
+	if(!sleeping1) {
+		sleeping1 = 1;
+		start_unwind(&sleepStruct);
+	} else {
+		stop_rewind();
+		sleeping1 = 0;
+	}
+}
+void timerLoop() {
+	unsigned int num = 0;
+	do {
+		logNum(++num);
+		timerSleep();
+	} while(1);
+}
+void reenterTimer() {
+	start_rewind(&sleepStruct);
+	timerLoop();
+	stop_unwind();
+	setTimeout(1000);
+}
+void runTimer() {
+	timerLoop();
+	stop_unwind();
+	setTimeout(1000);
 }
