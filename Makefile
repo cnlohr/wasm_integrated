@@ -13,21 +13,18 @@ EMCC_FLAGS:= --no-entry -s EXPORTED_FUNCTIONS='["_run","_animation"]' -s EXPORTE
 
 C_S:=cfile.c
 
-runtime.wasm : runtime.wat
+env.wasm : env.wat
 	wat2wasm -r -o $@ $^
 
-cfile.o : $(C_S)
-	$(EMCC) -o $@ -c $(C_S) $(EMCC_FLAGS)
-
-prog.wasm: cfile.o runtime.wasm
-	/opt/emscripten-llvm/bin/wasm-ld --no-entry -o $@ cfile.o runtime.wasm --export=_run
+cfile.wasm : $(C_S) env.wasm
+	$(EMCC) -o $@ $(C_S) env.wasm $(EMCC_FLAGS)
 	wasm-opt --asyncify $@ -o $@
 
 %.wasm.b64 : %.wasm
 	cat $^ | base64 > $@
 
-c-test.html : template.ht prog.wasm.b64 wasmtemplate
-	./wasmtemplate template.ht prog.wasm.b64 > $@
+c-test.html : template.ht cfile.wasm.b64 wasmtemplate
+	./wasmtemplate template.ht cfile.wasm.b64 > $@
 
 
 wasmtemplate : wasmtemplate.c
@@ -35,7 +32,7 @@ wasmtemplate : wasmtemplate.c
 
 
 clean :
-	rm -rf wasmtemplate prog.wasm.b64 prog.wasm cfile.o runtime.wasm
+	rm -rf wasmtemplate cfile.wasm.b64 cfile.wasm env.wasm
 
 clean_all : clean
 	rm -rf c-test.html

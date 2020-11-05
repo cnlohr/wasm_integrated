@@ -4,7 +4,7 @@
   (import "asyncify" "stop_unwind" (func $asyncify_stop_unwind))
   (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
   (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
-  (func $main
+  (func $testLoop
     (call $env.logInt (i32.const 1))
     (call $sleep)
     (call $env.logInt (i32.const 3))
@@ -26,16 +26,16 @@
       )
     )
   )
-  (func $run (export "run")
-    ;; Call main the first time, let the stack unwind.
-    (call $main)
+  (func $runLoop
+    ;; Call testLoop the first time, let the stack unwind.
+    (call $testLoop)
     (call $asyncify_stop_unwind)
     ;; We could do anything we want around here while
     ;; the code is paused!
     (call $env.logInt (i32.const 2))
     ;; Set the rewind in motion.
     (call $asyncify_start_rewind (i32.const 16))
-    (call $main)
+    (call $testLoop)
   )
   (memory 1 1)
   (global $sleeping (mut i32) (i32.const 0))

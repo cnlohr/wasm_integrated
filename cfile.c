@@ -10,7 +10,7 @@ extern void beginPath();
 extern void tackSegment(int x1, int y1, int x2, int y2);
 extern void stroke();
 
-void run();
+void runLoop();
 void submitFrame();
 
 const uint32_t callStackSize = 4096;
@@ -29,8 +29,11 @@ void *getCallStackData() {
 	return &callStruct;
 }
 
+void run() {
+	runLoop();
+}
+
 void animation() {
-	run();
 	int frame = 0;
 	do {
 		canvasClear();
@@ -45,7 +48,7 @@ void animation() {
 			tackSegment(cx+cosf(a1)*r1, cy+sinf(a1)*r1, cx+cosf(a2)*r2, cy+sinf(a2)*r2);
 		}
 		stroke();
-		//submitFrame();
+		submitFrame();
 		++frame;
 	} while(0);
 }
