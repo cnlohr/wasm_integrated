@@ -6,16 +6,16 @@ else
 EMCC?=emcc
 endif
 
-EMCC_FLAGS:= -s EXPORTED_FUNCTIONS='["_testcallback","_add2","_animationFrame"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0 
+EMCC_FLAGS:= --no-entry -s EXPORTED_FUNCTIONS='["_getCallStackData","_animation"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -s ERROR_ON_UNDEFINED_SYMBOLS=0
 #-s SIDE_MODULE=1
 #-s STANDALONE_WASM=1
 #-s MODULARIZE
 
 C_S:=cfile.c
 
-
 cfile.wasm : $(C_S)
 	$(EMCC) -o $@ $(C_S) $(EMCC_FLAGS)
+	wasm-opt --asyncify $@ -o $@
 
 %.wasm.b64 : %.wasm
 	cat $^ | base64 > $@
