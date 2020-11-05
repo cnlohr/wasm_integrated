@@ -3,14 +3,11 @@
 <META charset="UTF-8">
 <SCRIPT>
 
-var g_wa;
-var callStack;
-
-function onLoad()
-{
+	var g_wa;
 	var memory_bytes; //Actually a  UInt8Array of the memory object.
 	var memory_words; //Actually an Int32Array of the memory object.
-	var sleeping = false;
+function onLoad()
+{
 	var canvas = document.getElementById( "rawdrawcanvas" );
 	var ctx = canvas.getContext("2d");
 	var lastx=null, lasty=null;
@@ -32,42 +29,28 @@ function onLoad()
 			beginPath : function() { ctx.beginPath(); },
 			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
 			stroke : function() { ctx.stroke(); },
-			writeStr : function() { console.log( "hi!" ); },
-			submitFrame : function() {
-				if (!sleeping) {
-					g_wa.instance.exports.asyncify_start_unwind(callStack);
-					sleeping = true;
-					window.requestAnimationFrame(function() {
-					  g_wa.instance.exports.asyncify_start_rewind(callStack);
-					  g_wa.instance.exports.animation();
-					});
-				} else {
-					g_wa.instance.exports.asyncify_stop_rewind();
-					sleeping = false;
-				}
-			}
+			logStr : function( s ) { console.log(s); },
+			requestAnimationFrame : function() { window.requestAnimationFrame(g_wa.instance.exports.reenterAnimation); },
+			setTimeout : function( t ) { setTimeout(g_wa.instance.exports.reenterTimer, t); }
 		}
 	};
 
 	WebAssembly.instantiate( array, imports ).then( 
 		function(wa) {
 			g_wa = wa;
-			memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
-			memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
-			callStack = g_wa.instance.exports.getCallStackData();
+			//memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
+			//memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
 			console.log( wa );
 			console.log( wa.instance );
 		}
 	);
-
 }
+
 function animation() {
-	g_wa.instance.exports.animation();
-	g_wa.instance.exports.asyncify_stop_unwind();
+	g_wa.instance.exports.runAnimation();
 }
-
-function log() {
-	g_wa.instance.exports.doLog();
+function sleeper() {
+	g_wa.instance.exports.runTimer();
 }
 
 </SCRIPT>
@@ -77,7 +60,7 @@ function log() {
 <DIV STYLE="position:absolute;width:640">
 <DIV>This is an example of a fully integrated wasm page.  It shows how you can run wasm without fetch() or anything so it loads super quick even over connections with really high latency, or you can run it from your hard drive just by double clicking on it.  Check out the project here: <A HREF=https://github.com/cnlohr/wasm_integrated>https://github.com/cnlohr/wasm_integrated</A>.</DIV>
 <INPUT value="animation" type=submit onClick="animation()">
-<INPUT value="log" type=submit onClick="log()">
+<INPUT value="timer" type=submit onClick="sleeper()">
 </DIV>
 <DIV STYLE="positon:absolute;z-index:3">
 <CANVAS ID=rawdrawcanvas WIDTH=640 HEIGHT=480></CANVAS>
