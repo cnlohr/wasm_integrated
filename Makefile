@@ -1,20 +1,9 @@
 all : c-test.html
 
-ifneq ("$(wildcard ~/git/emsdk/upstream/emscripten/emcc)","")
-EMCC?=~/git/emsdk/upstream/emscripten/emcc
-else
-EMCC?=emcc
-endif
-
-EMCC_FLAGS:= --no-entry -s EXPORTED_FUNCTIONS='["_run","_animation"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]'
-#-s SIDE_MODULE=1
-#-s STANDALONE_WASM=1
-#-s MODULARIZE
-
 C_S:=cfile.c
 
 cfile.wasm : $(C_S)
-	clang -Wl,--no-entry,--allow-undefined,--export=runAnimation,--export=runTimer,--export=reenterAnimation,--export=reenterTimer,--export=submitFrame,--export=timerSleep -nostdlib --target=wasm32 -o $@ $(C_S) -lc
+	clang -Wl,--no-entry,--allow-undefined,--export=runAnimation,--export=runTimer,--export=reenterAnimation,--export=reenterTimer,--export=submitFrame,--export=timerSleep -nostdlib --target=wasm32 -o $@ $(C_S)
 	wasm2wat -o cfile.wat cfile.wasm
 	sed -i 's/$$start_unwind/$$asyncify_start_unwind/g' cfile.wat
 	sed -i 's/$$stop_unwind/$$asyncify_stop_unwind/g' cfile.wat

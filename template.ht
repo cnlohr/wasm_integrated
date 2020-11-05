@@ -29,9 +29,11 @@ function onLoad()
 			beginPath : function() { ctx.beginPath(); },
 			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
 			stroke : function() { ctx.stroke(); },
-			logStr : function( s ) { console.log(s); },
+			logNum : function( x ) { console.log(x); },
 			requestAnimationFrame : function() { window.requestAnimationFrame(g_wa.instance.exports.reenterAnimation); },
-			setTimeout : function( t ) { setTimeout(g_wa.instance.exports.reenterTimer, t); }
+			setTimeout : function( t ) { setTimeout(g_wa.instance.exports.reenterTimer, t); },
+			sinf : function( x ) { return Math.sin(x); },
+			cosf : function( x ) { return Math.cos(x); }
 		}
 	};
 

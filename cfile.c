@@ -3,9 +3,11 @@ extern void canvasClear();
 extern void beginPath();
 extern void tackSegment(int x1, int y1, int x2, int y2);
 extern void stroke();
-extern void logStr(const char*);
+extern void logNum(unsigned int x);
 extern void requestAnimationFrame();
 extern void setTimeout(unsigned int);
+extern float sinf(float x);
+extern float cosf(float x);
 
 void start_unwind(void*);
 void stop_unwind();
@@ -30,18 +32,6 @@ struct {
 	&sleepStack[callStackSize]
 };
 
-float sinf(float f) {
-	int i = f * 100000;
-	i %= 200000;
-	return i > 100000 ? 2 - i/100000.f : i/100000.f;
-}
-float cosf(float f) {
-	f += 1;
-	int i = f * 100000;
-	i %= 200000;
-	return i > 100000 ? 2 - i/100000.f : i/100000.f;
-}
-
 unsigned char sleeping0 = 0;
 void submitFrame() {
 	if(!sleeping0) {
@@ -57,7 +47,15 @@ void animation() {
 	do {
 		canvasClear();
 		beginPath();
-		tackSegment(100, frame%60+200, 300, (60-(frame%60))+200);
+		for(int i = 0; i <= 62; i++) {
+			int r1 = 120;
+			int r2 = 120;
+			int cx = 320;
+			int cy = 240;
+			float a1 = i / 10. + frame / 60.;
+			float a2 = i / 10. + 1;
+			tackSegment(cx+cosf(a1)*r1, cy+sinf(a1)*r1, cx+cosf(a2)*r2, cy+sinf(a2)*r2);
+		}
 		stroke();
 		submitFrame();
 		++frame;
@@ -86,8 +84,9 @@ void timerSleep() {
 	}
 }
 void timerLoop() {
+	unsigned int num = 0;
 	do {
-		logStr("tick");
+		logNum(++num);
 		timerSleep();
 	} while(1);
 }
