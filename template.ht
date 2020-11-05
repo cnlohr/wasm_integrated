@@ -3,13 +3,11 @@
 <META charset="UTF-8">
 <SCRIPT>
 
-function onLoad()
-{
 	var g_wa;
 	var memory_bytes; //Actually a  UInt8Array of the memory object.
 	var memory_words; //Actually an Int32Array of the memory object.
-	var callStack;
-	var sleeping = false;
+function onLoad()
+{
 	var canvas = document.getElementById( "rawdrawcanvas" );
 	var ctx = canvas.getContext("2d");
 	var lastx=null, lasty=null;
@@ -31,32 +29,18 @@ function onLoad()
 			beginPath : function() { ctx.beginPath(); },
 			tackSegment: function( x1, y1, x2, y2 ) { if( x1 !== lastx || y1 !== lasty ) { ctx.moveTo( x1, y1 ); } ctx.lineTo( x2, y2 ); lastx = x1; lasty = y1; },
 			stroke : function() { ctx.stroke(); },
-			submitFrame : function() {
-				if (!sleeping) {
-					g_wa.instance.exports.asyncify_start_unwind(callStack);
-					sleeping = true;
-					window.requestAnimationFrame(function() {
-					  g_wa.instance.exports.asyncify_start_rewind(callStack);
-					  g_wa.instance.exports.animation();
-					});
-				} else {
-					g_wa.instance.exports.asyncify_stop_rewind();
-					sleeping = false;
-				}
-			}
+			logInt : function( x ) { console.log(x); }
 		}
 	};
 
 	WebAssembly.instantiate( array, imports ).then( 
 		function(wa) {
 			g_wa = wa;
-			memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
-			memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
-			callStack = g_wa.instance.exports.getCallStackData();
+			//memory_bytes = new Uint8Array(g_wa.instance.exports.memory.buffer);
+			//memory_words = new Int32Array(g_wa.instance.exports.memory.buffer);
 			console.log( wa );
 			console.log( wa.instance );
-			g_wa.instance.exports.animation();
-			g_wa.instance.exports.asyncify_stop_unwind();
+			g_wa.instance.exports.run();
 		}
 	);
 }
