@@ -1,3 +1,7 @@
+# SUPERSEDED NOTICE
+
+This project is in the process of being superseded by this one: https://github.com/cnlohr/rawdrawwasm/
+
 # wasm_integrated
 An eample of how you can fully integrate wasm into a webpage.  No need for feteching or any of that jazz.  What if someone's on a connection with a lot of latency?  What if you want to load a wasm app from your hard drive directly, like double-clicking on the HTML file?  Whelp, this is that.
 
